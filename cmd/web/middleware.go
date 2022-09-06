@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	_ "github.com/justinas/alice" //use this package to avoid writing handler chain
+	
 )
 
 //use Middleware to automatically add the HTTP security headers to every response
