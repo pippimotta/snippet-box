@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-
-	
 )
 
 //use Middleware to automatically add the HTTP security headers to every response
