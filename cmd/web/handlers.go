@@ -13,11 +13,10 @@ import (
 )
 
 type snippetCreateForm struct {
-	Title       string
-	Content     string
-	Expires     int
-	FieldErrors map[string]string
-	validator.Validator
+	Title   string `form:"title"`
+	Content string	`form:"content"`
+	Expires int	`form:"expires"`
+	validator.Validator `form:"-"`
 }
 
 func (a *application) home(w http.ResponseWriter, r *http.Request) {
@@ -67,21 +66,16 @@ func (a *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+	
+
+	var form snippetCreateForm
+	err := a.decodePostForm(r, &form)
+	
 	if err != nil {
 		a.clientError(w, http.StatusBadRequest)
 		return
 	}
-	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
-	if err != nil {
-		a.clientError(w, http.StatusBadRequest)
-		return
-	}
-	form := &snippetCreateForm{
-		Title:   r.PostForm.Get("title"),
-		Content: r.PostForm.Get("content"),
-		Expires: expires,
-	}
+
 
 	//use Validator check the title value is not blank & is not more than 100 characters long,
 	//if fails, add a message to the erros maps using the field name as key
@@ -94,7 +88,6 @@ func (a *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) 
 	//check the expires value matches one of the permitted Values (365, 1, 7)
 	form.CheckField(validator.PermittedInt(form.Expires, 1, 7, 365), "expires", "This field must be equal 1, 7 or 365")
 
-	//if there is any error, dump it into HTTP response
 	if !form.Valid() {
 		data := a.newTemplateData(r)
 		data.Form = form
