@@ -51,6 +51,7 @@ func (a *application) render(w http.ResponseWriter, status int, page string, dat
 func (a *application) newTemplateData(r *http.Request) *templateData {
 	return &templateData{
 		CurrentYear: time.Now().Year(),
+		Flash: a.sessionManager.PopString(r.Context(),"flash"), //use the PopString() method to retrieve the value from the "flash" key
 	}
 }
 
