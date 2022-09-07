@@ -9,7 +9,16 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/pippimotta/snippet-box/internal/models"
+	"github.com/pippimotta/snippet-box/internal/validator"
 )
+
+type snippetCreateForm struct {
+	Title       string
+	Content     string
+	Expires     int
+	FieldErrors map[string]string
+	validator.Validator
+}
 
 func (a *application) home(w http.ResponseWriter, r *http.Request) {
 
@@ -51,16 +60,49 @@ func (a *application) snippetView(w http.ResponseWriter, r *http.Request) {
 
 func (a *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 	data := a.newTemplateData(r)
+	data.Form = &snippetCreateForm{
+		Expires: 365,
+	}
 	a.render(w, http.StatusOK, "create.tmpl", data)
-
 }
 
 func (a *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
-	title := "O snail"
-	content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n -Kobayashi Issa"
-	expires := 7
+	err := r.ParseForm()
+	if err != nil {
+		a.clientError(w, http.StatusBadRequest)
+		return
+	}
+	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
+	if err != nil {
+		a.clientError(w, http.StatusBadRequest)
+		return
+	}
+	form := &snippetCreateForm{
+		Title:   r.PostForm.Get("title"),
+		Content: r.PostForm.Get("content"),
+		Expires: expires,
+	}
 
-	id, err := a.snippets.Insert(title, content, expires)
+	//use Validator check the title value is not blank & is not more than 100 characters long,
+	//if fails, add a message to the erros maps using the field name as key
+	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
+
+	//check the Content value isn't blank
+	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
+
+	//check the expires value matches one of the permitted Values (365, 1, 7)
+	form.CheckField(validator.PermittedInt(form.Expires, 1, 7, 365), "expires", "This field must be equal 1, 7 or 365")
+
+	//if there is any error, dump it into HTTP response
+	if !form.Valid() {
+		data := a.newTemplateData(r)
+		data.Form = form
+		a.render(w, http.StatusUnprocessableEntity, "create.tmpl", data)
+		return
+	}
+
+	id, err := a.snippets.Insert(form.Title, form.Content, form.Expires)
 	if err != nil {
 		a.serverError(w, err)
 		return
