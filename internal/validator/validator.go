@@ -3,17 +3,20 @@ package validator
 import (
 	"strings"
 	"unicode/utf8"
+
+	"github.com/asaskevich/govalidator"
 )
 
 type Validator struct {
 	FieldErrors map[string]string
+	NonFieldErrors []string
 }
 
 func (v *Validator) Valid() bool {
-	return len(v.FieldErrors) == 0
+	return len(v.FieldErrors) == 0 && len(v.NonFieldErrors) ==0
 }
 
-//AddFieldError adds an error to the FieldErrors map
+// AddFieldError adds an error to the FieldErrors map
 func (v *Validator) AddFieldError(key, message string) {
 	//initialize the map
 
@@ -27,24 +30,28 @@ func (v *Validator) AddFieldError(key, message string) {
 	}
 }
 
-//CheckField adds an error message to the FieldErros map only id a Validation check is not OK
+func (v *Validator) AddNonFieldError(message string){
+	v.NonFieldErrors = append(v.NonFieldErrors, message)
+}
+
+// CheckField adds an error message to the FieldErros map only id a Validation check is not OK
 func (v *Validator) CheckField(ok bool, key, message string) {
 	if !ok {
 		v.AddFieldError(key, message)
 	}
 }
 
-//NotBlank returns true if a value is not an empty string
+// NotBlank returns true if a value is not an empty string
 func NotBlank(value string) bool {
 	return strings.TrimSpace(value) != ""
 }
 
-//MaxChars returns true if a value contains no more than n characters
+// MaxChars returns true if a value contains no more than n characters
 func MaxChars(value string, n int) bool {
 	return utf8.RuneCountInString(value) <= n
 }
 
-//PermittedInt returns true if a value is in a list of permitted integers
+// PermittedInt returns true if a value is in a list of permitted integers
 func PermittedInt(value int, permittedValues ...int) bool {
 	for i := range permittedValues {
 		if value == permittedValues[i] {
@@ -52,4 +59,14 @@ func PermittedInt(value int, permittedValues ...int) bool {
 		}
 	}
 	return false
+}
+
+// MinChars returns true if a value contains at least n characters
+func MinChars(value string, n int) bool {
+	return utf8.RuneCountInString(value) >= n
+}
+
+func IsEmail(value string) bool{
+	return govalidator.IsEmail(value) 
+
 }
