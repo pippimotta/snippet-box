@@ -99,7 +99,7 @@ func (a *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) 
 	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
 
 	//check the expires value matches one of the permitted Values (365, 1, 7)
-	form.CheckField(validator.PermittedInt(form.Expires, 1, 7, 365), "expires", "This field must be equal 1, 7 or 365")
+	form.CheckField(validator.PermittedValue(form.Expires, 1, 7, 365), "expires", "This field must be equal 1, 7 or 365")
 
 	if !form.Valid() {
 		data := a.newTemplateData(r)

@@ -2,10 +2,12 @@ package main
 
 import (
 	"html/template"
+	"io/fs"
 	"path/filepath"
 	"time"
 
 	"github.com/pippimotta/snippet-box/internal/models"
+	"github.com/pippimotta/snippet-box/ui"
 )
 
 type templateData struct {
@@ -28,27 +30,21 @@ var functions = template.FuncMap{
 
 func newTemplateCache() (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
-	pages, err := filepath.Glob("./ui/html/pages/*.tmpl")
+	pages, err := fs.Glob(ui.Files,"html/pages/*.tmpl")
 	if err != nil {
 		return nil, err
 	}
 	for _, page := range pages {
 		name := filepath.Base(page)
 
-		//firstly, parse the base template file into a template set
-		ts, err := template.New(name).Funcs(functions).ParseFiles("./ui/html/base.tmpl")
-		if err != nil {
-			return nil, err
+		//Create a slice containing the filepath patterns for the templates
+		patterns := []string{
+			"html/base.tmpl",
+			"html/partials/*.tmpl",
+			page,
 		}
-
-		//Then call parseglob to parse all the partials onto the template set made previously
-		ts, err = ts.ParseGlob("./ui/html/partials/*.tmpl")
-		if err != nil {
-			return nil, err
-		}
-
-		//Finally add the page template
-		ts, err = ts.ParseFiles(page)
+		//use ParseFS instead of ParseFiles to parse all template files from the embedded filesystem
+		ts, err := template.New(name).Funcs(functions).ParseFS(ui.Files, patterns...)
 		if err != nil {
 			return nil, err
 		}
