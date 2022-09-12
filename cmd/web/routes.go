@@ -22,6 +22,7 @@ func (a *application) routes() http.Handler {
 	//create a new middleware chain containing the middleware to control dynamic routes
 	//divide routes into two groups, one for "protected", one for "unprotected"
 	dynamic := alice.New(a.sessionManager.LoadAndSave, a.noSurf, a.authenticated)
+	router.HandlerFunc(http.MethodGet,"/ping", ping)
 	router.Handler(http.MethodGet, "/", dynamic.ThenFunc(a.home))
 	router.Handler(http.MethodGet, "/snippet/view/:id", dynamic.ThenFunc(a.snippetView))
 	router.Handler(http.MethodGet, "/user/signup", dynamic.ThenFunc(a.userSignup))
