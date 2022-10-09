@@ -197,7 +197,7 @@ func (a *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 
 	//check if the credentials are valid. if not add a generic non-field error
 
-	id, err := a.users.Authentiate(form.Email, form.Password)
+	id, err := a.users.Authenticate(form.Email, form.Password)
 	if err != nil {
 		if errors.Is(err, models.ErrInvalidCredentials) {
 			form.AddNonFieldError("Email or password is incorrect")
